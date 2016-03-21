@@ -74,14 +74,16 @@ class Station
      * @return array
      * @throws ApiException
      */
-    public static function getDepartures (int $stationID, Carbon $time)
+    public static function getDepartures (int $stationID, Carbon $time, int $maxJourneys = 10)
     {
         // prepare parameters for our request
         $query = [
             'input' => $stationID,
             'boardType' => 'dep',
             'time' => $time->format('H:i'),
-            'date' => $time->format('d.m.y')
+            'date' => $time->format('d.m.y'),
+            'maxJourneys' => $maxJourneys,
+            'start' => 'yes'
         ];
         // send it to the bvg mobile site
         $response = \Requests::get(self::getApiEndpoint() . '?' . http_build_query($query));
@@ -98,22 +100,19 @@ class Station
             $date = trim(substr($date->text, strpos($date->text, ':') + 1));
             $date = Carbon::createFromFormat('d.m.y', $date, 'Europe/Berlin');
             // get table data without the first line (header)
-            $rows = $dom->find('.ivu_result_box .ivu_table tr');
+            $rows = $dom->find('.ivu_result_box .ivu_table tbody tr');
             // loop through each departure in the table
             foreach ($rows as $row) {
                 // get columns
                 $columns = $row->find('td');
-                // check if row contains info
-                if ($columns[0] != '') {
-                    // explode time into two parts
-                    $time = explode(':', strip_tags($columns[0]));
-                    // push the departure onto our results array
-                    $departures[] = [
-                        'time' => $date->hour($time[0])->minute($time[1])->second(0),
-                        'line' => trim(strip_tags($columns[1]->find('a')[0])),
-                        'direction' => trim($columns[2]->find('a')[0]->text)
-                    ];
-                }
+                // explode time into two parts
+                $time = explode(':', strip_tags($columns[0]));
+                // push the departure onto our results array
+                $departures[] = [
+                    'time' => $date->hour($time[0])->minute($time[1])->second(0),
+                    'line' => trim(strip_tags($columns[1]->find('a')[0])),
+                    'direction' => trim(strip_tags($columns[2]))
+                ];
             }
 
             // return results
