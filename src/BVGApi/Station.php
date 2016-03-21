@@ -109,7 +109,7 @@ class Station
                 $time = explode(':', strip_tags($columns[0]));
                 // push the departure onto our results array
                 $departures[] = [
-                    'time' => $date->hour($time[0])->minute($time[1])->second(0),
+                    'time' => $date->copy()->hour($time[0])->minute($time[1])->second(0),
                     'line' => trim(strip_tags($columns[1]->find('a')[0])),
                     'direction' => trim(strip_tags($columns[2]))
                 ];
