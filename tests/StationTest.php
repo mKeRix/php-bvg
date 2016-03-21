@@ -27,17 +27,17 @@ class StationTest extends PHPUnit_Framework_TestCase
         $expected = [
             [
                 'time' => \Carbon\Carbon::create(2016, 3, 21, 12, 0, 0, 'Europe/Berlin'),
-                'line' => 'Tra   M6',
+                'line' => 'Tra M6',
                 'direction' => 'S Hackescher Markt (Berlin)'
             ],
             [
                 'time' => \Carbon\Carbon::create(2016, 3, 21, 12, 0, 0, 'Europe/Berlin'),
-                'line' => 'Tra   M6',
+                'line' => 'Tra M6',
                 'direction' => 'Riesaer Str. (Berlin)'
             ],
             [
                 'time' => \Carbon\Carbon::create(2016, 3, 21, 12, 0, 0, 'Europe/Berlin'),
-                'line' => 'Tra   M2',
+                'line' => 'Tra M2',
                 'direction' => 'Am Steinberg'
             ]
         ];

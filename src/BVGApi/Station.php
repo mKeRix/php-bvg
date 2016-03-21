@@ -17,8 +17,8 @@ class Station
      */
     private static function getApiEndpoint()
     {
-        if (getenv('CI') == true) {
-            return 'http://php-bvg-ci.herokuapp.com/';
+        if (boolval(getenv('TRAVIS')) == true || boolval(getenv('PHPUNIT')) == true) {
+            return 'http://php-bvg-ci.herokuapp.com/index.php';
         }
         else {
             return 'http://mobil.bvg.de/Fahrinfo/bin/stboard.bin/eox';
@@ -48,13 +48,13 @@ class Station
             // loop through each suggested station
             foreach ($dom->find('.select a') as $station) {
                 // get url parameters of current station for info
-                $url = $station->href;
+                $url = html_entity_decode($station->href);
                 $query = parse_url($url)['query'];
                 parse_str($query, $parameters);
                 // push the station information onto our results array
                 $stations[] = [
                     'id' => $parameters['input'],
-                    'name' => trim($dom->text)
+                    'name' => trim($station->text)
                 ];
             }
 
@@ -84,7 +84,7 @@ class Station
             'date' => $time->format('d.m.y')
         ];
         // send it to the bvg mobile site
-        $response = \Requests::get(self::getApiEndpoint(), [], $query);
+        $response = \Requests::get(self::getApiEndpoint() . '?' . http_build_query($query));
 
         if ($response->status_code == 200) {
             // our results array
@@ -95,21 +95,25 @@ class Station
 
             // get date from API
             $date = $dom->find('#ivu_overview_input');
-            $date = substr($date->text, strpos($date->text, ':') + 2);
+            $date = trim(substr($date->text, strpos($date->text, ':') + 1));
             $date = Carbon::createFromFormat('d.m.y', $date, 'Europe/Berlin');
             // get table data without the first line (header)
-            $rows = array_slice($dom->find('.ivu_result_box .ivu_table tr'), 1);
+            $rows = $dom->find('.ivu_result_box .ivu_table tr');
             // loop through each departure in the table
             foreach ($rows as $row) {
                 // get columns
                 $columns = $row->find('td');
-                $time = explode(':', $columns[0]);
-                // push the departure onto our results array
-                $departures[] = [
-                    'time' => $date->hour($time[0])->minute($time[1]),
-                    'line' => $columns[1],
-                    'direction' => $columns[3]
-                ];
+                // check if row contains info
+                if ($columns[0] != '') {
+                    // explode time into two parts
+                    $time = explode(':', strip_tags($columns[0]));
+                    // push the departure onto our results array
+                    $departures[] = [
+                        'time' => $date->hour($time[0])->minute($time[1])->second(0),
+                        'line' => trim(strip_tags($columns[1]->find('a')[0])),
+                        'direction' => trim($columns[2]->find('a')[0]->text)
+                    ];
+                }
             }
 
             // return results

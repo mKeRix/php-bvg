@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <phpunit bootstrap="./vendor/autoload.php">
+    <php>
+        <env name="PHPUNIT" value="true"/>
+    </php>
+
     <testsuites>
         <testsuite name="php-bvg test suite">
             <directory>./tests/</directory>
